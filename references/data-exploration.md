@@ -1,6 +1,6 @@
 # Data exploration before modelling
 
-Read this at step 2 of the loop. The exploration is not a warm-up: each finding should end up
+Read this at step 2 of the preparation. The exploration is not a warm-up: each finding should end up
 as a reason for a design choice (what to exclude, which split, which benchmark, which features
 for iteration 0). Write it as a short report in the user's tool of choice, with one section per
 question below and a one-line conclusion under each table or plot.

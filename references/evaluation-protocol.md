@@ -15,7 +15,7 @@ needs care.
 
 ## 1. Decision context and information cutoff
 
-Write down, before modelling (step 0 of the loop collects most of this from the user):
+Write down, before modelling (step 0 of the preparation collects most of this from the user):
 - the decision the forecast serves (e.g. "late today, decide how to allocate resources for
   tomorrow") — this fixes the **horizon** (here: 1 period) and often makes long horizons
   irrelevant;
@@ -118,7 +118,7 @@ Algorithm (language-neutral):
 
 ## 7. Metrics
 
-The primary and guardrail metrics come from step 0 of the loop (the user's decision and
+The primary and guardrail metrics come from step 0 of the preparation (the user's decision and
 existing definitions). For other metrics the bootstrap works the same way: per block, keep the
 sums the metric is built from (e.g. squared errors and counts for RMSE, pinball losses for
 quantiles, costs for a cost-weighted error), resample blocks, and recompute the metric of each

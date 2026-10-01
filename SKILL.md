@@ -13,7 +13,14 @@ here is designed so that the user can see what changed, why, and whether it is r
 The user decides every promotion. Present evidence and a recommendation; do not promote,
 commit, or move on to the next iteration on your own.
 
-## The loop
+## Overview: preparation once, then the iteration loop
+
+Steps 0–5 are **preparation**, done once per project (and revisited only when the use case,
+the data or the deployment changes). Steps 6–9 are the **iteration loop**, repeated for every
+challenger. Do not start the loop before the preparation is complete: without an agreed use
+case, metric, exploration, evaluation design and baseline, iteration results cannot be judged.
+
+### Preparation (once)
 
 0. **Understand the use case the predictions serve** (see *Step 0: the use case and what it
    requires of the model*). Which decision they feed, when, at what granularity, what errors
@@ -43,6 +50,10 @@ commit, or move on to the next iteration on your own.
 5. **Iteration 0**: the smallest sensible model that meets the step-0 requirements, chosen
    from the data exploration. It is expected to lose; its job is to give a floor and a working
    pipeline. Measure its run time: that is the cycle length every later iteration will pay.
+   Iteration 0 is the first champion.
+
+### Iteration loop (repeat for every challenger)
+
 6. **One challenger at a time** against the current champion — one change, one hypothesis
    (see *How to cut iterations*).
 7. **Run, check the step-0 requirements, then judge by the protocol** (see *When a challenger
@@ -51,7 +62,8 @@ commit, or move on to the next iteration on your own.
    (see `references/diagnosis-and-pitfalls.md`). The next challenger should follow from the
    diagnosed mechanism, not from a list of plausible features.
 9. **The user promotes or rejects.** The loser moves to the history; the results again show
-   one champion and at most one challenger.
+   one champion and at most one challenger. Then back to step 6 — or, if a finding changes the
+   use case, the data or the deployment, back to the relevant preparation step.
 
 ## Step 0: the use case and what it requires of the model
 
