@@ -65,6 +65,23 @@ later. Clarify, in the user's words:
 - **Cost of errors**: symmetric or asymmetric (running out vs. overstocking), absolute or
   relative, which segments matter most. This picks the metric and the loss — possibly a
   quantile or a cost-weighted error instead of a plain average.
+- **Metrics the predictions are judged by** — ask explicitly, and ask for the definitions
+  already in use (reports, dashboards, today's method):
+  - the **primary metric** that decides between champion and challenger (e.g. WAPE, MAE,
+    RMSE, pinball loss for quantiles, a cost-weighted error, a business KPI computed from the
+    predictions), and at which level it is computed — per entity and day, per segment, on
+    totals — and how entities are weighted (by volume, equally, by value);
+  - **guardrail metrics** that must not get worse (e.g. bias, interval coverage, error on a
+    key segment, stability of predictions between retrains);
+  - how the business reads the result (e.g. "error in units per day", "share of days off by
+    more than 50 %"), so results can be reported in those terms as well.
+
+  Comment critically where a metric does not fit the data or the decision, and say why: MAPE
+  is undefined or explodes with zeros and small values; RMSE is dominated by the largest
+  entities and outliers; an unweighted average over entities lets tiny entities decide; a
+  point-error metric cannot judge intervals; a metric that differs from the training loss
+  favours models trained for something else. Agree on one primary metric before the first
+  evaluation — it is the one the protocol's gap and significance test are computed on.
 - **Required properties of the model's behaviour**, for example:
   - *price or promotion optimisation* — demand must respond to price smoothly and strictly
     monotonically, otherwise the optimiser exploits wiggles of the fitted curve; this calls
@@ -84,7 +101,8 @@ later. Clarify, in the user's words:
 - **What "good enough" means**: the gain over today's method that would change a decision.
 
 Write the requirements down as **acceptance checks** (e.g. "price response monotonic and
-smooth for every product on the observed price range", "90 % interval coverage within 85–95 %").
+smooth for every product on the observed price range", "90 % interval coverage within 85–95 %",
+"bias within ±5 %"), and record the primary and guardrail metrics next to them.
 They are gates: a challenger that fails one is not compared on accuracy at all. Comment if a
 requirement and the user's other choices conflict (e.g. a strict monotonic price response with
 a model class that cannot be constrained).

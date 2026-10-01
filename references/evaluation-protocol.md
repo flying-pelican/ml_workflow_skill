@@ -72,9 +72,10 @@ winter–spring regime with a summer–autumn one and confuse seasonal effects w
 Earlier variant (multi-week horizon): two forecast dates, one for selection, one for
 verification. Same logic, far less data — prefer the rolling year when the use case allows.
 
-## 5. Significance: block bootstrap of the WAPE gap
+## 5. Significance: block bootstrap of the metric gap
 
-For challenger a and reference b on the same rows:
+The gap is computed on the **primary metric agreed in step 0**; WAPE is used as the example
+below. For challenger a and reference b on the same rows:
 
     gap = (Σ|y − ŷa| − Σ|y − ŷb|) / Σy        (negative: a is better)
 
@@ -116,6 +117,12 @@ Algorithm (language-neutral):
   localise a gap, not to select models (selection uses the protocol).
 
 ## 7. Metrics
+
+The primary and guardrail metrics come from step 0 of the loop (the user's decision and
+existing definitions). For other metrics the bootstrap works the same way: per block, keep the
+sums the metric is built from (e.g. squared errors and counts for RMSE, pinball losses for
+quantiles, costs for a cost-weighted error), resample blocks, and recompute the metric of each
+model and their difference per draw. Defaults that worked for demand forecasting:
 
 - WAPE (Σ|y − ŷ| / Σy) as the headline: scale-free across entities, robust to zeros.
 - Bias ((Σŷ − Σy) / Σy) alongside — a lower bias with a higher WAPE is a common sign of a
