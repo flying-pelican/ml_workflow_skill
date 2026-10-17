@@ -29,9 +29,10 @@ case, metric, exploration, evaluation design and baseline, iteration results can
    class, the metric and the acceptance checks of every later iteration.
 1. **Interview the user on data, stack and infrastructure** (see *Step 1: data, stack and
    infrastructure*). Everything after this step — how data is read, where features and the
-   evaluation are implemented, how long runs are handled — is adapted to the answers. Comment
-   critically on the choices, above all on the expected iteration cycle length (see *Comment
-   on the choices: cycle length*).
+   evaluation are implemented, how long runs are handled — is adapted to the answers. Assess
+   the available resources and their cost structure, and ask how the user weighs their own
+   time against compute consumption or cloud costs. Comment critically on the choices, above
+   all on the expected iteration cycle length (see *Comment on the choices: cycle length*).
 2. **Explore the data to identify the potential and the main challenges** (see *Step 2:
    explore the data*): how much of the variation a model could explain beyond simple rules,
    and what will make it hard (cold starts, anomalies, short history, drivers not available at
@@ -54,16 +55,24 @@ case, metric, exploration, evaluation design and baseline, iteration results can
 
 ### Iteration loop (repeat for every challenger)
 
-6. **One challenger at a time** against the current champion — one change, one hypothesis
-   (see *How to cut iterations*).
+6. **Plan the round: one idea per candidate** against the current champion — one change, one
+   hypothesis (see *How to cut iterations*). A round tests either a single challenger, several
+   independent challengers in parallel, or a search (feature selection, hyperparameter tuning)
+   that counts as one challenger. Which mode fits is a trade-off between earlier information
+   gain and resource consumption, and between expected information gain and run time (see
+   *One candidate or several per round*); state the plan with its expected run time and cost,
+   and let the user agree.
 7. **Run, check the step-0 requirements, then judge by the protocol** (see *When a challenger
    wins*). Report the target slice the change was aimed at separately from the overall result.
 8. **If a gap persists or a change fails, diagnose before inventing the next feature**
    (see `references/diagnosis-and-pitfalls.md`). The next challenger should follow from the
    diagnosed mechanism, not from a list of plausible features.
-9. **The user promotes or rejects.** The loser moves to the history; the results again show
-   one champion and at most one challenger. Then back to step 6 — or, if a finding changes the
-   use case, the data or the deployment, back to the relevant preparation step.
+9. **The user promotes or rejects.** At most one candidate is promoted per decision; losers
+   move to the history. If several parallel candidates won, the others are re-tested on top of
+   the new champion in the next round, because their gains need not add up. The results again
+   show one champion and only the candidates still open. Then back to step 6 — or, if a
+   finding changes the use case, the data or the deployment, back to the relevant preparation
+   step.
 
 ## Step 0: the use case and what it requires of the model
 
@@ -134,13 +143,26 @@ examples so the user can answer in a few words, e.g.:
   you write notebook cells, the user runs them)?
 - **Language and libraries** — Python (pandas, polars, PySpark), R, SQL; model libraries
   already in use (scikit-learn, LightGBM, XGBoost, CatBoost, Spark ML, …).
-- **Run budget** — how long may one evaluation run take, and are there compute costs (cluster
-  time) that should shape the number of refits or bootstrap draws?
+- **Resources and cost structure** — what compute is available (local cores, memory and GPU,
+  a shared cluster, cloud instances), how many runs can go in parallel, and how it is paid
+  for: already-paid local hardware or a fixed reservation (an extra run costs little but
+  wall-clock time) vs. pay-per-use cloud or cluster time (every run and every parallel
+  candidate costs money), quotas, budget caps, start-up and queueing times. How long may one
+  evaluation run take?
 - **Results and history** — where results should live (notebooks, a report, an experiment
   tracker such as MLflow), whether work is versioned (git), and whether anything should be
   committed or published without asking (default: no).
 - **Constraints** — data protection, licences that forbid redistributing the data, company
   standards for code or environments.
+
+Once the resources and their costs are clear, ask **how the user weighs their own time
+against resource consumption or cloud costs** — a rough figure (e.g. "an hour of my time is
+worth about 100 € of compute") or a qualitative answer ("compute is idle anyway, my time is
+the bottleneck", "the cloud budget is capped at 200 € per month", "no rush, keep costs
+minimal"). Translate the answer into one or two working rules and confirm them (e.g. "run up
+to three candidates in parallel on the local machine; tuning only after the feature set is
+stable"). This valuation decides the exploration mode of every round in the loop (see *One
+candidate or several per round*).
 
 Record the answers where the project keeps its notes (or tell the user they should be noted),
 so the next session does not ask again. Then adapt:
@@ -172,6 +194,10 @@ into one iteration — which makes results uninterpretable.
   heavy computation to where the data lives, run refits in parallel or as jobs. Say what each
   shortcut costs (e.g. a subsample widens the intervals; a coarser cadence hides effects of new
   entities).
+- **Cycle length × number of candidates.** A round with k parallel candidates or a search costs
+  k times (or more) the compute of one candidate; on pay-per-use resources that is money, on a
+  single machine it is wall-clock time. Estimate both per round (see *One candidate or several
+  per round*).
 - **Very short and cheap?** Then the risk is the opposite: many quick challengers against the
   same selection partition inflate false wins (each comparison is a new chance to fit noise).
   Keep the verification partition untouched by tuning, keep the iteration history complete
@@ -260,6 +286,52 @@ Establish the baseline before iteration 0, on exactly the evaluation rows:
   exploring features; move to the expensive realistic setup (e.g. weekly refits) as its own
   iteration when a diagnosis points at it.
 
+## One candidate or several per round
+
+"One idea at a time" constrains each *candidate*, not the number of candidates per round.
+Every candidate still differs from the champion by one change with one hypothesis; what
+varies is how many are tested at once:
+
+| Mode | Information gain | Resources | Follow-up cost and risk |
+|---|---|---|---|
+| **Single challenger** | one answer per cycle; the next idea can build on the result and its diagnosis | lowest | slowest in wall-clock time when many ideas are open |
+| **Parallel challengers** (several independent single changes, each against the same champion) | several answers per cycle — earlier | k × compute and cost, or k × wall-clock time if run one after another | winners must still be combined; more comparisons on the selection partition mean more chances of a spurious win |
+| **Search** (feature selection, hyperparameter tuning) — counts as one challenger: the search procedure is the change | broad, but about one dimension | often 10–100 × the run time of a single candidate | many comparisons inside the search; the result must be confirmed outside it |
+
+- **Parallel winners still have to be combined.** Two candidates that each beat the champion
+  were each tested on top of the champion alone. Their gains need not add up — they may fix
+  the same errors (e.g. two proxies for the same missing driver) or interact. Promote one (the
+  user decides, usually the larger or more robust gain, or the simpler one on a tie), then
+  test the other as a challenger on top of the new champion. Parallel therefore pays off most
+  in screening, when most candidates are expected to fail: a round eliminates them all at
+  once, and each winner beyond the first costs one more round later.
+- **More candidates per round, more false wins.** With k candidates judged on the same
+  selection partition, the best of them is optimistically selected. The verification
+  partition is the protection: apply the decision rule unchanged to every candidate, report
+  all k results including the losers, and do not loosen the confirmation because "one of them
+  had to win". Several candidates that are variants of one idea (e.g. three window lengths of
+  the same feature) are a search, not parallel challengers — treat them as one.
+- **Searches stay inside the selection partition.** Tune or select features within the
+  selection partition only (nested — see `references/validation-split-design.md`); the best
+  configuration is then one challenger, confirmed on verification like any other. Bound the
+  search before starting it (number of trials or hours; random search or successive halving
+  rather than a full grid).
+- **Weigh expected information gain against run time.** Rank the open candidates roughly by
+  "how likely is a gain that changes a decision, and how large" per hour of run time or per
+  unit of cost. A cheap candidate with an uncertain but possibly large effect goes first; a
+  long hyperparameter search on a model with sensible defaults typically yields less than a
+  new source of information (a feature, a forecast of a driver), so it comes once the feature
+  set is stable or when a diagnosis points at capacity or regularisation (e.g. under- or
+  overfitting visible in learning curves). Long runs can go in the background while the user
+  reviews other results, if the resources allow.
+- **Let the user's valuation decide.** Use the working rules from step 1. Idle or already-paid
+  compute with the user's time as the bottleneck favours parallel rounds and background runs;
+  pay-per-use cloud with a capped budget favours single challengers, the screening tier (see
+  *Comment on the choices: cycle length*) and late, bounded tuning.
+- **State the plan before each round**: the candidates and their hypotheses, the mode and why,
+  the expected run time and cost, and which follow-up rounds a win would trigger. The user
+  agrees before it runs.
+
 ## When a challenger wins
 
 First check the step-0 acceptance checks (e.g. monotonic, smooth price response; interval
@@ -345,7 +417,8 @@ document); the structure matters, not the tool.
 - Champion vs. baseline section: overall table, significance by partition × segment (table +
   interval plot), by segment, by month (WAPE and bias), by day type and exogenous drivers, by entity volume,
   totals over time, feature importance.
-- Challenger section (when one exists): what changes and the hypothesis; results by segment
+- One challenger section per open candidate (none when no round is open): what changes and
+  the hypothesis; results by segment
   and month next to the champion; protocol tables against champion and baseline; the target
   slice; importance; a short summary written *after* reading the outputs.
 - Feature importance with more than one measure — split or usage counts mislead (features
@@ -358,7 +431,10 @@ document); the structure matters, not the tool.
 
 - Lead with the decision-relevant result: protocol outcome against the champion, the target
   slice, and the standing against the baseline. Tables over prose; numbers from the outputs.
+  In a round with several candidates, one table with all of them (losers included), the run
+  time and cost actually spent, and what the winners imply for the next round (e.g. which one
+  to promote first and which to re-test on top of it).
 - Say plainly when a change missed its target, when a gain is not significant, or when an
   earlier claim turned out to be noise.
 - End with the recommendation and the question the user needs to answer (promote? next
-  challenger?). Do not commit unless asked.
+  challenger or round?). Do not commit unless asked.

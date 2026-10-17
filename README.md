@@ -15,12 +15,12 @@ iteration loop (steps 6–9) for every challenger, and lets the user decide ever
 | Step | What happens |
 |---|---|
 | 0. Use case | Which decision the predictions feed, what errors cost, required model properties (e.g. a smooth, strictly monotonic price response for price optimisation) — written down as acceptance checks; how the decision is made today, with its documentation |
-| 1. Data, stack, infrastructure | Short interview (local files and notebooks, Databricks and Delta tables, warehouse, …), critical feedback on the choices, above all on the iteration cycle length |
+| 1. Data, stack, infrastructure | Short interview (local files and notebooks, Databricks and Delta tables, warehouse, …); available resources and their cost structure, and how the user weighs their own time against compute or cloud costs; critical feedback on the choices, above all on the iteration cycle length |
 | 2. Data exploration | Potential (what is explainable beyond simple rules) and main challenges (cold starts, anomalies, short history, drivers unavailable at decision time, dependence) |
 | 3. Evaluation design | Information cutoff from the use case; validation split chosen from the data (random, grouped, time-based, purged, spatial, distance matching, nested); disjoint selection and verification partitions |
 | 4. Non-ML baseline | Today's method reproduced from its documentation, plus simple rule-based benchmarks — the reference for everything after |
 | 5. Iteration 0 | The smallest model that meets the requirements; its run time is the cycle length; it is the first champion |
-| **6–9. Iteration loop (repeated)** | One change per challenger with a stated hypothesis; acceptance checks as gates; promotion only if better in the selection partition and confirmed in the verification partition, with a block-bootstrap significance test; diagnosis before the next feature; the user promotes or rejects |
+| **6–9. Iteration loop (repeated)** | One change per candidate with a stated hypothesis; per round a single challenger, parallel challengers or a bounded search (feature selection, tuning), chosen by expected information gain against run time and cost; parallel winners re-tested one on top of the other; acceptance checks as gates; promotion only if better in the selection partition and confirmed in the verification partition, with a block-bootstrap significance test; diagnosis before the next feature; the user promotes or rejects |
 
 ## When it triggers
 
