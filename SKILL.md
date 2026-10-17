@@ -15,8 +15,8 @@ commit, or move on to the next iteration on your own.
 
 ## Overview: preparation once, then the iteration loop
 
-Steps 0–5 are **preparation**, done once per project (and revisited only when the use case,
-the data or the deployment changes). Steps 6–9 are the **iteration loop**, repeated for every
+Steps 0–6 are **preparation**, done once per project (and revisited only when the use case,
+the data or the deployment changes). Steps 7–10 are the **iteration loop**, repeated for every
 challenger. Do not start the loop before the preparation is complete: without an agreed use
 case, metric, exploration, evaluation design and baseline, iteration results cannot be judged.
 
@@ -52,27 +52,33 @@ case, metric, exploration, evaluation design and baseline, iteration results can
    from the data exploration. It is expected to lose; its job is to give a floor and a working
    pipeline. Measure its run time: that is the cycle length every later iteration will pay.
    Iteration 0 is the first champion.
+6. **Exploratory shot**: one quick, broad model that addresses all findings of the data
+   exploration at once — built fast, purely for information gain (see *Step 6: the
+   exploratory shot*). It is never a candidate for promotion. Its output is analysed and
+   compared to iteration 0 to learn early where the potential lies, which findings carry
+   signal and what still fails; the result is a ranked list of iteration candidates.
 
 ### Iteration loop (repeat for every challenger)
 
-6. **Plan the round: one idea per candidate** against the current champion — one change, one
+7. **Plan the round: one idea per candidate** against the current champion — one change, one
    hypothesis (see *How to cut iterations*). A round tests either a single challenger, several
    independent challengers in parallel, or a search (feature selection, hyperparameter tuning)
    that counts as one challenger. Which mode fits is a trade-off between earlier information
    gain and resource consumption, and between expected information gain and run time (see
    *One candidate or several per round*); state the plan with its expected run time and cost,
-   and let the user agree.
-7. **Run, check the step-0 requirements, then judge by the protocol** (see *When a challenger
+   and let the user agree. Draw candidates from the exploratory shot's ranked list and from
+   diagnoses of earlier rounds.
+8. **Run, check the step-0 requirements, then judge by the protocol** (see *When a challenger
    wins*). Report the target slice the change was aimed at separately from the overall result.
-8. **If a gap persists or a change fails, diagnose before inventing the next feature**
+9. **If a gap persists or a change fails, diagnose before inventing the next feature**
    (see `references/diagnosis-and-pitfalls.md`). The next challenger should follow from the
    diagnosed mechanism, not from a list of plausible features.
-9. **The user promotes or rejects.** At most one candidate is promoted per decision; losers
+10. **The user promotes or rejects.** At most one candidate is promoted per decision; losers
    move to the history. If several parallel candidates won, the others are re-tested on top of
    the new champion in the next round, because their gains need not add up. The results again
-   show one champion and only the candidates still open. Then back to step 6 — or, if a
-   finding changes the use case, the data or the deployment, back to the relevant preparation
-   step.
+    show one champion and only the candidates still open. Then back to step 7 — or, if a
+    finding changes the use case, the data or the deployment, back to the relevant preparation
+    step.
 
 ## Step 0: the use case and what it requires of the model
 
@@ -260,6 +266,51 @@ Establish the baseline before iteration 0, on exactly the evaluation rows:
 - The best simple benchmark, or today's method if it is better, is the **reference** that the
   champion is compared against throughout.
 
+## Step 6: the exploratory shot
+
+Right after iteration 0, build one quick model that throws everything at the problem: every
+finding of the data exploration is addressed in one go — all candidate features, fallbacks for
+cold starts and short history, forecasts of the exogenous drivers, flags for anomalies or
+regime changes, a flexible model class with default settings. Speed over care: it is written
+in one sitting, like a first draft, time-boxed to a few cycle lengths (agree the box with the
+user, using the valuation from step 1).
+
+**It is not an iteration.** It is never promoted, never becomes the champion, and its code is
+not the basis of later iterations — features that prove useful are rebuilt carefully, one per
+challenger, in the shared code. Its gain cannot be attributed to single changes (interactions,
+correlated features splitting importance), which is exactly why it cannot replace the loop.
+
+Two rules still hold, because without them the insights are wrong:
+
+- **Same rows and same information cutoff** as every evaluated model. A leak in the shot
+  produces a false potential and sends the iterations after a ghost; if the shot is
+  suspiciously good, check for leakage first (`references/diagnosis-and-pitfalls.md`).
+- **Analyse on the selection partition only.** The insights steer which candidates are built;
+  if they were drawn from the verification partition, it would no longer be a clean
+  confirmation later. Report verification at most as one overall number, or not at all.
+
+Compare the shot with iteration 0 and the baseline, by segment, month and the diagnostic slices,
+and read its feature importance and attributions:
+
+- **Size of the potential** — how far the shot gets beyond iteration 0 indicates what the
+  features from the exploration can achieve together. If it barely beats iteration 0, say so
+  early: the gain the use case needs (step 0) may not be reachable with this data.
+- **Which findings carry signal** — features and fallbacks the shot relies on, segments and
+  months where it gains most.
+- **What still fails** — segments, periods or entities where even the shot does not beat
+  iteration 0 or the baseline; these are challenges no current feature addresses and need a
+  diagnosis or new data, not more iterations.
+- **Acceptance checks** — report them (they do not gate the shot). A failure (e.g. a
+  non-monotonic price response) shows early that the model class or the features need
+  constraints.
+- **Cost** — its run time and resource use, as a first estimate of what a full-featured model
+  costs per cycle.
+
+The output is a **ranked list of iteration candidates**: each with its hypothesis, the slice it
+targets, the expected gain (from the shot's comparison) and the expected cost, ordered by
+expected information gain per run time (see *One candidate or several per round*). Record the
+shot once in the results, in its own section, and do not update it with later champions.
+
 ## How to cut iterations
 
 - **One change per iteration.** A change is one feature, one coherent feature group that
@@ -417,6 +468,8 @@ document); the structure matters, not the tool.
 - Champion vs. baseline section: overall table, significance by partition × segment (table +
   interval plot), by segment, by month (WAPE and bias), by day type and exogenous drivers, by entity volume,
   totals over time, feature importance.
+- Exploratory shot (one section, written once, not updated): what it included, the comparison
+  with iteration 0 and the baseline on the selection partition, and the ranked candidate list.
 - One challenger section per open candidate (none when no round is open): what changes and
   the hypothesis; results by segment
   and month next to the champion; protocol tables against champion and baseline; the target

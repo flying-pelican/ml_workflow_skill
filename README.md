@@ -9,8 +9,8 @@ be independent of domain, tools and infrastructure.
 
 ## What it does
 
-When the skill triggers, Claude first prepares the project once (steps 0–5), then runs the
-iteration loop (steps 6–9) for every challenger, and lets the user decide every promotion:
+When the skill triggers, Claude first prepares the project once (steps 0–6), then runs the
+iteration loop (steps 7–10) for every challenger, and lets the user decide every promotion:
 
 | Step | What happens |
 |---|---|
@@ -20,7 +20,8 @@ iteration loop (steps 6–9) for every challenger, and lets the user decide ever
 | 3. Evaluation design | Information cutoff from the use case; validation split chosen from the data (random, grouped, time-based, purged, spatial, distance matching, nested); disjoint selection and verification partitions |
 | 4. Non-ML baseline | Today's method reproduced from its documentation, plus simple rule-based benchmarks — the reference for everything after |
 | 5. Iteration 0 | The smallest model that meets the requirements; its run time is the cycle length; it is the first champion |
-| **6–9. Iteration loop (repeated)** | One change per candidate with a stated hypothesis; per round a single challenger, parallel challengers or a bounded search (feature selection, tuning), chosen by expected information gain against run time and cost; parallel winners re-tested one on top of the other; acceptance checks as gates; promotion only if better in the selection partition and confirmed in the verification partition, with a block-bootstrap significance test; diagnosis before the next feature; the user promotes or rejects |
+| 6. Exploratory shot | A quick, time-boxed model that addresses all exploration findings at once, purely for information gain and never promoted; compared with iteration 0 on the selection partition, it shows the potential, which findings carry signal and what still fails, and yields a ranked list of iteration candidates |
+| **7–10. Iteration loop (repeated)** | One change per candidate with a stated hypothesis; per round a single challenger, parallel challengers or a bounded search (feature selection, tuning), chosen by expected information gain against run time and cost; parallel winners re-tested one on top of the other; acceptance checks as gates; promotion only if better in the selection partition and confirmed in the verification partition, with a block-bootstrap significance test; diagnosis before the next feature; the user promotes or rejects |
 
 ## When it triggers
 

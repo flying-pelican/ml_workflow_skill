@@ -106,3 +106,5 @@ These numbers decide the validation split and the bootstrap unit
 - the dominant drivers and whether each is available at decision time;
 - the dependence measurements for the split design;
 - a short list of candidate features for iteration 0, each with the finding that motivates it.
+- the full list of findings a model could address (features, fallbacks, flags), as the input
+  for the exploratory shot after iteration 0 (step 6).
