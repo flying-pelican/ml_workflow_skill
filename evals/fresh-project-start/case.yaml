@@ -1,0 +1,14 @@
+schema_version: "1.1"
+name: fresh-project-start
+expected_outcome: |
+  The response starts the preparation instead of building a model. In one grouped round it
+  asks about the use case: the decision the predictions feed (who acts on them, when, at what
+  horizon), what errors cost, the metrics already in use, and how cancellations are handled
+  today. It asks about data access, where the work runs and how the user weighs their own time
+  against compute. It explains that plain accuracy is misleading with about 6 % churners. It
+  flags that cancellation_reason is only filled after a cancellation and that the activity
+  counts are taken at the export date, after the outcome, so they are not known at prediction
+  time. It says that the agreements will be recorded in project notes, and does not train,
+  build or recommend a final model yet.
+context:
+  scaffold_script: place-files.sh
