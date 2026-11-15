@@ -1,0 +1,12 @@
+schema_version: "1.1"
+name: plan-round-after-repeated-failures
+expected_outcome: |
+  A round plan for the user to agree to, nothing run. One candidate, idea (a), derived from
+  the diagnosis of iteration 6, with its hypothesis and target slice. Because two candidates
+  failed on the same slice, a screening run on that slice comes first (it can reject, not
+  promote), and the candidate is reviewed independently before running. The plan states run
+  time and cost against the remaining budget of 55 €, explains the choice of a single
+  challenger under the recorded valuation, defers the other ideas with reasons, and asks the
+  user to agree.
+context:
+  scaffold_script: place-files.sh

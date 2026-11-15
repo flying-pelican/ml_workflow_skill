@@ -1,0 +1,11 @@
+schema_version: "1.1"
+name: judge-mixed-result
+expected_outcome: |
+  Challenger 7 is not adopted, and the champion stays. The acceptance check passes for both.
+  The bias guardrail is judged against its agreed threshold of ±3 % and passes in both
+  partitions. Selection shows a gain, but in verification the segment of stores younger than
+  6 months is shown worse (+3.1 [+0.8, +5.4]), so the gain depends on the partition. The
+  response names this as the third failure on the same slice, proposes a diagnosis before any
+  new candidate, and leaves the decision to the user without writing a history entry first.
+context:
+  scaffold_script: place-files.sh

@@ -3,9 +3,8 @@
 A [Claude Agent Skill](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview)
 that makes Claude improve a predictive model one verifiable step at a time: champion and
 challenger iterations, a data-driven evaluation protocol, and a diagnosis before every new
-feature. It was distilled from a forecasting project (daily demand per entity, about one year
-of history, demand strongly tied to temperature and the seasonal profile), but it is written to
-be independent of domain, tools and infrastructure.
+feature. It was distilled from forecasting projects, but it is written to be independent of
+domain, tools and infrastructure.
 
 ## What it does
 
@@ -33,20 +32,23 @@ use case into model requirements, or diagnosing why a model loses to a simple be
 ## Repository layout
 
 ```
-SKILL.md                              the workflow, decision rules and reporting (loaded when the skill triggers)
+SKILL.md                     the binding rules of every step (loaded when the skill triggers)
 references/
-  evaluation-protocol.md              information cutoff, benchmarks, rolling origin, partitions,
-                                      block bootstrap (language-neutral algorithm), metrics,
-                                      canonical methods and deviations
-  validation-split-design.md          choosing the split from the data: deployment target,
-                                      dependence diagnostics, method table, acceptance checks
-  data-exploration.md                 what to explore and what the exploration must hand over
-  diagnosis-and-pitfalls.md           how to diagnose a gap, worked examples, leakage and
-                                      engineering pitfalls
+  preparation.md             steps 0–6: use case, interview, cycle length, exploration,
+                             baseline, exploratory shot
+  evaluation.md              information cutoff, split design, partitions, block bootstrap
+                             (language-neutral algorithm), metrics, canonical methods
+  iteration-loop.md          steps 7–10: one or several candidates, judging, results layout,
+                             lessons from use
+  diagnosis-and-pitfalls.md  how to diagnose a gap, worked examples, pitfalls
+evals/                       test cases for maintainers, not part of the skill (see Testing)
 ```
 
-`SKILL.md` stays short enough to load fully; the references are read only when a step needs
-them.
+`SKILL.md` stays short (about 11,000 characters) so that it remains loaded in full when a long
+conversation is compacted. The references hold only what a frontier model would not reliably
+do on its own: opinionated choices with their reasons, numbers from use, and incidents. They
+are read when a step needs them. Agreements and the project's state live in the project's
+notes, which the skill reads first.
 
 ## Installation
 
@@ -55,14 +57,26 @@ in `<project>/.claude/skills/<skill-name>/` (one project). To use this repositor
 single source, link it instead of copying it, so edits here take effect immediately:
 
 ```bash
-ln -s /Users/stm/code/ML_workflow_skill ~/.claude/skills/ml-model-iteration
+ln -s /path/to/ml_workflow_skill ~/.claude/skills/ml-model-iteration
 ```
 
 If a copy already exists at that path, remove it first.
 
 Skills do not sync across Claude surfaces. For claude.ai, upload the folder as a zip file
-(without `.git`) under Settings > Features; for the Claude API, upload it through the Skills
+without `.git` and `evals/` under Settings > Features (the skill-creator's packaging script
+leaves `evals/` out by itself); for the Claude API, upload it through the Skills
 API. See [Agent Skills — where Skills work](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview#where-skills-work).
+
+## Testing
+
+`evals/` holds test cases in the layout `claude plugin eval` reads: per case the user's
+prompt, the expected outcome, one assertion per grader file, and input files. They check the
+rules that a model would not follow on its own, for example planning a round after repeated
+failures and judging a mixed result by the decision table. `SKILL.md` never points to
+`evals/`, so an agent using the skill does not load it, and `evals/README.md` says the cases
+are not instructions. Run them after every change to the rules, with a fresh agent that has
+the skill or with `claude plugin eval . --scaffold` from the skill directory; keep the results
+in a workspace next to the skill, not in this repository.
 
 Note for edits: the `description` in the `SKILL.md` frontmatter may be at most 1024
 characters (currently 987) and decides when the skill triggers.
@@ -81,5 +95,6 @@ characters (currently 987) and decides when the skill triggers.
 
 ## Status
 
-Drafted from one project and not yet tested on independent tasks. Feedback from real use —
-especially on other domains and stacks — is the next step.
+Used so far mainly on demand forecasting, predominantly in retail and energy; the lessons are
+folded into the rules (`references/iteration-loop.md`, *Lessons from use*). Feedback from
+other domains and from neural network models would be most welcome.
